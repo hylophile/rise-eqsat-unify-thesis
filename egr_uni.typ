@@ -1,0 +1,91 @@
+#import "base.typ": *
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+#import "@preview/cetz:0.3.4": draw
+
+#show raw: r => {
+  set text(font: "JetBrains Mono")
+  r
+}
+
+
+#let d1 = diagram(
+  ..diagram-conf,
+  node((0, 0), enode-text-hl(`~`), ..enode-conf-hl, name: <uni1>),
+  // node((1,0), enode-text-hl(`~`),..enode-conf-hl,name:<uni2>),
+  node((0, 2), enode-text-hl(`5`), ..enode-conf-hl, name: <five>),
+  node((1.5, 1), enode-text-hl(`+`), ..enode-conf-hl, name: <plus>),
+  node((1, 2), enode-text-hl(`1`), ..enode-conf-hl, name: <one>),
+  node((2, 2), stack(text(size:10pt,font:"JetBrains Mono","mvar"),`a`), ..enode-conf-hl, name: <mva>),
+  // node((0, 1), enode-text-hl(`4`), ..enode-conf-hl, name: <four>),
+  // node((0.6, 1), enode-text-hl(`-`), ..enode-conf-hl, name: <minus>),
+  // node(enclose: (<uni1>, <uni2>), ..eclass-conf-hl, name: <euni>),
+  node(enclose: (<uni1>), ..eclass-conf-hl, name: <euni>),
+  // node(enclose: (<four>, <minus>), ..eclass-conf-hl, name: <efourminus>),
+  node(enclose: (<plus>), ..eclass-conf-hl, name: <eplus>),
+  node(enclose: (<five>), ..eclass-conf-hl, name: <efive>),
+  node(enclose: (<one>), ..eclass-conf-hl, name: <eone>),
+  node(enclose: (<mva>), ..eclass-conf-hl, name: <emva>),
+  // edge(<uni1>, (rel:(-1,0)),<five>, edge-mark, ..edge-conf-hl),
+  edge(<uni1>, <efive>, edge-mark, bend:-45deg, ..edge-conf-hl),
+  edge(<uni1>, <eplus>, edge-mark, ..edge-conf-hl),
+  edge(<plus>,shift:(.25,0),<eone>,edge-mark,..edge-conf-hl),
+  edge(<plus>,shift:(-.25,0),<emva>,edge-mark,..edge-conf-hl),
+  // edge(<minus>,<eone>,edge-mark,..edge-conf-hl),
+  // edge(<minus>,<efive>,edge-mark,..edge-conf-hl),
+  // edge(<uni2>,<efourminus>,edge-mark,..edge-conf-hl),
+  // edge(<uni2>,<emva>,edge-mark,bend:45deg,..edge-conf-hl),
+)
+#let d2 = diagram(
+  ..diagram-conf,
+  node((0, 0), enode-text(`~`), ..enode-conf, name: <uni1>),
+  node((1,0), enode-text-hl(`~`),..enode-conf-hl,name:<uni2>),
+  node((0, 2), enode-text(`5`), ..enode-conf, name: <five>),
+  node((1.5, 1), enode-text(`+`), ..enode-conf, name: <plus>),
+  node((1, 2), enode-text(`1`), ..enode-conf, name: <one>),
+  // node((2, 2), stack(text(size:10pt,font:"JetBrains Mono","mvar"),`a`), ..enode-conf-hl, name: <mva>),
+  node((2, 2), stack(text(size:10pt,fill:black.lighten(50%),font:"JetBrains Mono","mvar"),enode-text(`a`)), ..enode-conf, name: <mva>),
+  // node((0, 1), enode-text-hl(`4`), ..enode-conf-hl, name: <four>),
+  node((0.6, 1), enode-text-hl(`-`), ..enode-conf-hl, name: <minus>),
+  node(enclose: (<uni1>, <uni2>), ..eclass-conf-hl, name: <euni>),
+  node(enclose: (<minus>), ..eclass-conf-hl, name: <efourminus>),
+  node(enclose: (<plus>), ..eclass-conf, name: <eplus>),
+  node(enclose: (<five>), ..eclass-conf, name: <efive>),
+  node(enclose: (<one>), ..eclass-conf, name: <eone>),
+  node(enclose: (<mva>), ..eclass-conf, name: <emva>),
+  // edge(<uni1>, (rel:(-1,0)),<five>, edge-mark, ..edge-conf-hl),
+  edge(<uni1>, <efive>, edge-mark, bend:-45deg, ..edge-conf),
+  edge(<uni1>, <eplus>, edge-mark, ..edge-conf),
+  edge(<plus>,shift:(.25,0),<eone>,edge-mark,..edge-conf),
+  edge(<plus>,shift:(-.25,0),<emva>,edge-mark,..edge-conf),
+  edge(<minus>,<eone>,edge-mark,..edge-conf-hl),
+  edge(<minus>,<efive>,edge-mark,..edge-conf-hl),
+  edge(<uni2>,<efourminus.north>,edge-mark,..edge-conf-hl),
+  edge(<uni2>,<emva>,edge-mark,bend:45deg,..edge-conf-hl),
+)
+#let d3 = diagram(
+  ..diagram-conf,
+  node((0, 0), enode-text(`~`), ..enode-conf, name: <uni1>),
+  node((1,0), enode-text(`~`),..enode-conf,name:<uni2>),
+  node((0, 2), enode-text(`5`), ..enode-conf, name: <five>),
+  node((1.5, 1), enode-text(`+`), ..enode-conf, name: <plus>),
+  node((1, 2), enode-text(`1`), ..enode-conf, name: <one>),
+  node((2, 2), stack(text(size:10pt,fill:black.lighten(50%),font:"JetBrains Mono","mvar"),enode-text(`a`)), ..enode-conf, name: <mva>),
+  node((0, 1), enode-text-hl(`4`), ..enode-conf-hl, name: <four>),
+  node((0.6, 1), enode-text(`-`), ..enode-conf, name: <minus>),
+  node(enclose: (<uni1>, <uni2>), ..eclass-conf, name: <euni>),
+  node(enclose: (<four>, <minus>), ..eclass-conf-hl, name: <efourminus>),
+  node(enclose: (<plus>), ..eclass-conf, name: <eplus>),
+  node(enclose: (<five>), ..eclass-conf, name: <efive>),
+  node(enclose: (<one>), ..eclass-conf, name: <eone>),
+  node(enclose: (<mva>), ..eclass-conf, name: <emva>),
+  // edge(<uni1>, (rel:(-1,0)),<five>, edge-mark, ..edge-conf),
+  edge(<uni1>, <efive>, edge-mark, bend:-45deg, ..edge-conf),
+  edge(<uni1>, <eplus>, edge-mark, ..edge-conf),
+  edge(<plus>,shift:(.25,0),<eone>,edge-mark,..edge-conf),
+  edge(<plus>,shift:(-.25,0),<emva>,edge-mark,..edge-conf),
+  edge(<minus>,<eone>,edge-mark,..edge-conf),
+  edge(<minus>,<efive>,edge-mark,..edge-conf),
+  edge(<uni2>,<efourminus>,edge-mark,..edge-conf),
+  edge(<uni2>,<emva>,edge-mark,bend:45deg,..edge-conf),
+)
+
