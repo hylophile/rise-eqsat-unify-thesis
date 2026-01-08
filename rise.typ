@@ -91,8 +91,6 @@ remainder of this thesis. A full grammar can be found in #ref(
   supplement: [Appendix],
   <rise-primitives>,
 ), which may help to get a better understanding of what is possible with #rise.
-// #q[todo]
-// immutable, functional, dependently typed,
 
 #figure(
   ```rise
@@ -208,7 +206,7 @@ with only basic syntax.
 ) <impl-macro>
 
 // #pagebreak()
-==== Elaboration.
+==== Elaboration. <rise-elab>
 To create the Lean values that describe typed #rise expressions (`TypedRExpr`),
 we use one central elaboration function (excerpt shown in @impl-elab). This
 function matches on all basic #rise syntax, and returns a `TypedRExpr`

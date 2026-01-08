@@ -31,24 +31,19 @@ variables without prefix.
 If unification fails, i.e., there is no substitution $sigma$ such that
 $forall l ~ r in G$ . $sigma(l) = sigma(r)$, then that will indicate a type
 error in the input program, because there are some pairs of types that should
-have been made equal by unification, but were not. Note that this is different
-from an existing, but empty, substitution, which may be valid if there are no
+have been made equal by $sigma$, but were not. Note that this is different from
+an existing, but empty, substitution, which may be valid if there are no
 metavariables in the unification goals.
 
-Usually, unification is successful if a substitution is found. ???
-
-
-However, unification variables that we will solve for represent the
-metavariables of the input program. But since metavariables are an internal
-implementation detail of #rise, we do not want to communicate their existence
-back to the user
-
-As such, we will only consider the found substitution suitable if every variable
-resolves to a term _that does not include any metavariables itself_. This is not
-merely an aesthetic choice: If our algorithm cannot find a concrete solution for
-every metavariable, then the input program was underspecified. When unification
-_does_ find a suitable substitution $sigma$, we will then apply $sigma$ to the
-types of the input program and communicate the inferred type back to the user.
+Usually, unification is successful if a substitution is found. However, as
+mentioned in @rise-impl, metavariables are not part of the #rise type system,
+and typed #rise programs never contain any metavariables. As such, we will only
+consider the found substitution suitable if every metavariable resolves to a
+term _that does not include any metavariables itself_. This is not merely an
+aesthetic choice: If our algorithm cannot find a concrete solution for every
+metavariable, then the input program was underspecified. When unification _does_
+find a suitable substitution $sigma$, we will then apply $sigma$ to the types of
+the input program and communicate the inferred type back to the user.
 
 #figure(
   [```rise
@@ -81,65 +76,68 @@ typecheck. To arrive at this conclusion, we first consider the application #r(
 ), which supplies #r("10") to #r("take"). Every #r("n") in its type is
 substituted with #r("10"), so #r(
   "take (10 : nat) : {m : nat} → {t : data} → (10+m)·t → 10·t",
-). Next, we apply #r("take (10 : nat)") to #r("xs"). Since the leftmost
-parameters of #r("take (10 : nat)") are implicit parameters, we now generate a
-fresh metavariable for each implicit parameter, and substitute the previously
-bound variables with the respective metavariables. So now we have
+). Next, we supply #r("xs") to #r("take (10 : nat)"). The leftmost parameters of
+#r("take (10 : nat)") are implicit parameters. For each implicit parameter, we
+generate a fresh metavariable, and substitute the previously bound variables
+with the respective metavariables. So now we have
 $#r("take (10 : nat) : (10+")metat(m)#r(")·")metat(t)#r(" → 10·")metat(t)$.
 Furthermore, the left-hand side of an application must be a function type, and
 the type of the right-hand side (#r("5·f32")) must _match_ the first explicit
 parameter of the left-hand side's type ($#r("(10+")metat(m)#r(")·")metat(t)$).
-This _matching_ is precisely what unification will enforce: The unification goal
-$#r("(10+")metat(m)#r(")·")metat(t) &~ #r("5·f32")$ is generated. For two types
-to be unifiable, first their structure must match. Since both sides are array
-types, their structure does match and we can consider their components. For each
-component, we generate a new unification goal that attempts to match them. The
-element types resolve to the goal $metat(t) &~ #r("f32")$, which ultimately
-would lead to $meta(t)$ being replaced with #r("f32"). However, the length
-component resolves to the goal $#r("10+")metat(m) &~ #r("5")$. There is no
-natural number that we can substitute for $meta(m)$ to satisfy this goal. Thus,
-unification as a whole ought to fail here, and ideally report back a reason for
-why it failed. Now that we have seen the intricacies of unification in practice,
-we will look at a more precise definition, which will also cover special cases
-that did not occur in the example.
-
-
+This _matching_ is precisely what unification will enforce: Therefore, the
+unification goal $#r("(10+")metat(m)#r(")·")metat(t) &~ #r("5·f32")$ is
+generated. For two types to be unifiable, first their structure must match.
+Since both sides are array types, their structure does indeed match and we can
+consider their components. For each component of the left array, we generate a
+new unification goal that attempts to unify the component with the respective
+component of the right array. The element types resolve to the goal
+$metat(t) &~ #r("f32")$, which suggests $meta(t)$ to be replaced with #r("f32").
+The length component resolves to the goal $#r("10+")metat(m) &~ #r("5")$.
+However, there is no natural number that we can substitute for $meta(m)$ to
+satisfy this goal. Thus, unification as a whole ought to fail here, and ideally
+report back a reason for why it failed. Now that we have seen the intricacies of
+unification in practice, we will look at a more precise definition, which will
+also cover special cases that did not occur in the example.
 
 #figure(
   include "mmrules.typ",
   caption: [Syntactic first-order unification rules per #cp(
       <martelliEfficientUnificationAlgorithm1982>,
-    ). $f$ and $g$ denote function symbols, $t$ is an arbitrary term, $meta(x)$
-    is a variable in the term language, and $G[meta(x)|->t]$ replaces all
-    $meta(x)$ in $G$ with $t$.],
+    ), adapted to use metavariables. $f$ and $g$ denote function symbols, $t$ is
+    an arbitrary term, $meta(x)$ is a metavariable, and $G[meta(x)|->t]$
+    replaces all $meta(x)$ in $G$ with $t$.],
 ) <unifrules>
 
 
-
-In @unifrules, we reproduce the unification algorithm as devised in #cp(
-  <martelliEfficientUnificationAlgorithm1982>,
-). This algorithm is known to be sound, complete, and terminating. While it is
-presented as an algorithm, we can also interpret it as a ruleset that
-declaratively describes how a solution will look like. The rules are applied to
-the input set $G$ as long as any of them apply, and we are left with either
-$bot$ (i.e., unification failed) or a new $G$ that is in the form of a
-substitution. Note that this algorithm describes _syntactic first-order
-unification_, which is known to be terminating. _Syntactic_ refers to terms
-being syntactically equal after applying the found substitution. _First-order_
-refers to the unification variables under scrutiny being of first order, i.e.,
+#cp(<martelliEfficientUnificationAlgorithm1982>) devised a unification algorithm
+that applies transformations to an input set until no transformation applies, or
+until a failure condition is met. We reproduce this algorithm in @unifrules, but
+phrase it as a set of inference rules. We also rephrase it to use metavariables,
+since those are the unification variables of interest. Each inference rule
+represents one transformation, where the premises are the conditions of whether
+the transformation is applied, and the conclusion shows how the input set is
+transformed. The rules are applied to the input set $G$ as long as any of them
+meet the respective premise, and we are left with either $bot$ (i.e.,
+unification failed) or a new $G$ that is in the form of a substitution. The
+algorithm, and therefore this ruleset, is known to be sound, complete, and
+terminating. However, it describes _syntactic first-order unification_, a
+special subset of the unification problem. _Syntactic_ refers to terms being
+syntactically equal after applying the found substitution. _First-order_ refers
+to the unification variables under scrutiny being of first order, i.e.,
 variables represent only constants, not functions @baaderTermRewritingAll1998.
-We will however shortly see why this is not sufficient for #rise types.
+We will shortly see why this is not sufficient for #rise types.
 
-Let us now briefly explain the necessity of each of these rules and relate them
-to unification of #rise types:
+Let us now briefly explain the necessity of each of the rules in @unifrules and
+relate them to unification of #rise types:
 - #smallcaps[U-Decompose] inspects function symbols and, if they match, adds
   their components to the solution set $G$. When the terms are of kind #r(
     "data",
-  ), a function symbol corresponds to a datatype constructor such as the array
-  type in the previous example. However, for terms of kind #r("nat"), this rule
-  is unsuitable: function symbols would correspond to functions over natural
-  numbers. Given e.g. $+(meta(x), 1)~+(2, 3)$, it does not follow that
-  $meta(x) ~ 2$.
+  ), the function symbol $f$ must correspond to a datatype constructor such as
+  the array type in the previous example. The rule attempts to unify the type
+  components of both sides in the conclusion, which is exactly what we did in
+  the example. However, for terms of kind #r("nat"), this rule is unsuitable, as
+  the function symbol would correspond to functions over natural numbers. Given
+  e.g. $+(meta(x), 1)~+(2, 3)$, it does not follow that $meta(x) ~ 2$.
 - #smallcaps[U-Delete] removes trivial solutions.
 - #smallcaps[U-Swap] moves variables to the left side, such that the final
   solution set will be in the shape of a substitution.
@@ -149,24 +147,23 @@ to unification of #rise types:
 - #smallcaps[U-Conflict] fails unification when differing function symbols are
   attempted to be unified. This is what we want for #r("data") types: We should
   never unify e.g. an array type with a pair type. For #r("nat")s, this is again
-  an unsuitable rule. E.g. $*(2,1)~+(1,1)$ would result in this rule matching
-  and failing the unification, even though computing the functions would yield a
-  valid solution of $2~2$.
+  an unsuitable rule. E.g. $* #h(0em) (2,1)~+(1,1)$ would result in this rule
+  matching and failing the unification, even though evaluating the functions
+  would yield a valid solution of $2~2$.
 - #smallcaps[U-Check] fails unificaiton if a variable _occurs_ in its own
   solution. This needs to fail because it would yield an infinitely nested term
   otherwise.
 
-// We write $f$ and $g$ for function symbols
-Thus, some of these rules are not sufficient (#smallcaps[U-Decompose]) or even
-detrimental to our goal (#smallcaps[U-Conflict]) of unifying the dependent types
-of #rise. Specifically, we need to split unification depending on the kind that
-is to be unified. From now on, we will write $udata$ ("#r("data")-unify") to
-express unifying type components of kind #r("data"), and analogously write
-$unat$ ("#r("nat")-unify") to unify #r("nat")s. A more general form or what we
-dub #r("nat")-unification is known as E-Unification (Equational unification) or
-_unification modulo theory_ in the literature: It takes into account semantic
-properties of function symbols (such as commutativity of $+$)
-@baaderTermRewritingAll1998.
+We can see, that some of these rules are not sufficient
+(#smallcaps[U-Decompose]) or even detrimental to our goal
+(#smallcaps[U-Conflict]) of unifying the dependent types of #rise. Specifically,
+we need to split unification depending on the kind that is to be unified. From
+now on, we will write $udata$ ("#r("data")-unify") to express unifying type
+components of kind #r("data"), and analogously write $unat$ ("#r("nat")-unify")
+to unify #r("nat")s. A more general form or what we dub #r("nat")-unification is
+known as E-Unification (Equational unification) or _unification modulo theory_
+in the literature: It takes into account semantic properties of function symbols
+(such as commutativity of $+$) @baaderTermRewritingAll1998.
 
 For #r("data"), we will use the rules of syntactic first-order unification as
 shown above - with one exception: #smallcaps[U-Decompose] needs to match on the
@@ -176,9 +173,8 @@ $n$ of the array, which is of kind #r("nat"), and of the element type of the
 array $t$, which is of kind #r("data"). So to unify two arrays
 $n_circ t udata m_circ u$, we need to unify the sizes $n unat m$ and the element
 types $t udata u$. Note that strictly speaking, the function type $t->u$ is not
-of kind #r("data"), but this is inconsequential for unification.
-
-// #q[why? mention that substs only subst data and nat?]
+of kind #r("data"), but this is inconsequential for unification, and therefore
+we unify function types also with $udata$.
 
 #let decomp-rules = grid(
   columns: 2,
@@ -229,10 +225,11 @@ of kind #r("data"), but this is inconsequential for unification.
   placement: bottom,
   context {
     let h = measure(decomp-rules).height
-    set align(center)
+    set align(center + horizon)
     stack(
       dir: ltr,
-      [#smallcaps[UD-Decompose-$ast$]$lr(\{ #v(h + .9em))$],
+      smallcaps[UD-Decompose-$ast$],
+      $lr(\{ #v(h + .9em))$,
       decomp-rules,
     )
   },
@@ -243,17 +240,16 @@ of kind #r("data"), but this is inconsequential for unification.
 ) <decomp-fine>
 
 We refrain here from giving a precise algorithm for $unat$, as that will depend
-on the approach taken. Additionally, solving $unat$ is undecidable as we will
-show in @completesound. However, the process is familiar to anyone who has
-enjoyed high school algebra: We are presented with a system of (possibly
-nonlinear) equations, and the goal is to find a unique solution --- if present
---- for every metavariable such that every equation in the system holds. This
-involves methods such as applying properties of equalities (i.e.,
+on the specific approach taken. Additionally, solving $unat$ is undecidable as
+we will show in @completesound. However, the problem statement is familiar to
+anyone who has enjoyed high school algebra: We are presented with a system of
+(possibly nonlinear) equations, and the goal is to find a unique solution --- if
+present --- for every (meta)variable such that every equation in the system
+holds. This involves methods such as applying properties of equalities (i.e.,
 adding/subtracting/etc. terms on both sides), transforming terms (e.g. applying
 commutativity of multiplication), and simplifying terms (e.g. the identity of
 subtraction $a-0=a$). Additionally, we want to detect unsatisfiability (e.g.
 $X+5 unat X+1$) and should that be present, declare the process as failed.
-// #q[mention bound vars, explainability]
 
 Now that we have described the unification problem and how it applies to type
 checking and type inference in #rise, we will move on to our approaches of
@@ -283,7 +279,6 @@ symbolically is important for our purposes: As mentioned before, solutions for
 metavariables might still depend on bound variables (i.e., symbols) of the #rise
 input program. We also specifically do _not_ want to solve for those bound
 variables, but only for metavariables.
-// #q[mention this is why its not satisfiability, i.e. smt is unsuitable?]
 
 While SymPy's age, popularity, and number of contributors speaks towards its
 trustworthiness, it is important to note that "[s]olvers in a Computer Algebra
@@ -291,17 +286,15 @@ System are based on heuristic algorithms, so it’s usually very hard to ensure
 100% percent correctness, in every possible
 case"#footnote[https://docs.sympy.org/latest/modules/solvers/solveset.html#how-does-solveset-ensure-that-it-is-not-returning-any-wrong-solution].
 
-As stated previously, our problem of solving $unat$ is akin
-// #footnote[#q[why not the same? advanced #rise types, not solving for all vars]]
-to solving systems of possibly nonlinear equations. SymPy employs various
-methods to solve systems of equations, depending on whether they are linear,
-nonlinear, or have other properties which will not be relevant to us. The
-systems of equations we will hand to SymPy _may_ be nonlinear, but may also be
-linear. One might assume that since nonlinear equations are a superset of linear
-equations, we could use the nonlinear methods to solve all of our inputs.
-However, SymPy's authors note that "[...] it is not recommended to solve linear
-system using `nonlinsolve`, because `linsolve()` is better for general linear
-systems"#footnote(
+As stated previously, our problem of solving $unat$ is akin to solving systems
+of possibly nonlinear equations. SymPy employs various methods to solve systems
+of equations, depending on whether they are linear, nonlinear, or have other
+properties which will not be relevant to us. The systems of equations we will
+hand to SymPy _may_ be nonlinear, but may also be linear. One might assume that
+since nonlinear equations are a superset of linear equations, we could use the
+nonlinear methods to solve all of our inputs. However, SymPy's authors note that
+"[...] it is not recommended to solve linear system using `nonlinsolve`, because
+`linsolve()` is better for general linear systems"#footnote(
   link(
     "https://docs.sympy.org/latest/modules/solvers/solveset.html#sympy.solvers.solveset.nonlinsolve",
   ),
@@ -309,7 +302,7 @@ systems"#footnote(
 of
 equations"#footnote[https://docs.sympy.org/latest/modules/solvers/solvers.html#module-sympy.solvers]
 in `solve()`, which determines the types of equations that are passed to it, and
-chooses the optimal way to solve the system.
+chooses a suitable method to solve the system.
 
 
 #figure(
@@ -540,7 +533,6 @@ contains a condition, i.e., it is only applied when this condition is true. The
 condition $"if no_conflict"(("data_mvar" pvar(a)),pvar(b))$ prevents creating
 conflicts in the spirit of #smallcaps[U-Conflict]. This involves analysis, which
 we will cover next.
-// #q[u-swap and u-delete]
 
 #figure(
   caption: [Rewrite rules for solving $udata$],
@@ -609,11 +601,14 @@ When the previously described #r("data")-unifying process is done and
 successful, we can consider #r("nat")-unifying. We will be left with a set of
 unification goals where both sides are of kind #nat. As before, we attempt to
 find a substitution that makes both sides of all unification goals equal.
-However, the equality that we desire is not syntactic equality, but rather
-semantic equality, since #r("nat")-unification is a specific kind of
-E-Unification. For example, given one unification goal of $bmv(a) ~ nmv(m) - 4$,
-it will be valid to find the substitution $[nmv(m)|-> bmv(a)+4]$ which yields
-semantic equality between both sides, but not syntactic equality.
+// maybe?
+However, what we desire is not syntactic equality, but rather semantic
+equivalence (see #smallcaps[R-NatEquiv] in @rise-tyrules), since #r(
+  "nat",
+)-unification is a specific kind of E-Unification. For example, given one
+unification goal of $bmv(a) ~ nmv(m) - 4$, it will be valid to find the
+substitution $[nmv(m)|-> bmv(a)+4]$ which yields semantic equivalence between
+both sides, but not syntactic equality.
 
 #figure(
   caption: [First #r("nat")-ruleset: Isolation of metavariables by applying
@@ -670,8 +665,8 @@ of the respective metavariable. It also makes sure that each metavariable has a
 unique final solution in the e-graph, by equalizing it with all solutions that
 are found during this isolation process. However, note that we equalize
 unconditionally. This may lead to setting terms equal in the e-graph that are
-impossible to be equal for natural numbers. We will discuss this issue further
-in @discus.
+actually impossible to be equal for natural numbers. We will discuss this issue
+further in @discus.
 
 We have now established how this first ruleset isolates metavariables. The next
 step will be to simplify the solutions that were found, since the resulting
@@ -741,6 +736,23 @@ Regrettably, this implies that the resulting terms may not be as simplified as
 they could be. Hence, we need to strike a balance between runtime performance
 and sufficient simplification. We will discuss this balance further in the next
 chapter.
+
+Once we have found a solution for each metavariable and simplified the
+solutions, we build a substitution mapping each metavariable to its solution,
+and apply this substitution to the type of the originating #rise program. Notice
+that a crucial step of #r("nat")-unification is still missing, namely that we
+have to verify whether after applying the substitution to each unification goal,
+semantic equivalence holds for each unification goal. There are multiple reasons
+for why this verification is difficult to do with equality saturation, all of
+which we will discuss in the next chapter.
+
+// have to verify the found substitution:
+// 1. After applying the substitution to the unification goals, semantic
+//   equivalence must hold for each unification goal.
+// 2. Our #r("nat")-terms are symbolic, i.e., they may contain bound variables of
+//   the #rise input program. Thus, we must prove that the unification goals (after
+//   applying the substitution) are satisfiable for those bound variables, i.e.,
+//   that there #q[]
 
 This concludes the presentation of unification and our approaches to solve it
 for the dependent types of #rise, using the MM-Algorithm and SymPy as one

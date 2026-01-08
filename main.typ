@@ -24,6 +24,8 @@
 #show cite: set text(blue.darken(20%))
 #show link: set text(blue.darken(20%))
 
+// #show math.equation: it => box(stroke: red, it)
+#show math.equation: box
 
 // block paragraphs
 #set par(justify: true)
@@ -54,6 +56,7 @@
 
 #show raw: it => {
   set text(font: "JetBrains Mono")
+  // box(fill:black.transparentize(95%), outset:.1em, it)
   it
 }
 

@@ -1,20 +1,8 @@
 
 #import "base.typ": *
-== #rise's Type System
-
-// #q[Most syntax classes are missing. E.g. $N, M$ are (nat?) terms]
-
-
-// #q[more about λC, in here or before.]
-
-
-
-
-///////////////////////////
-
+== #rise's Type System <rise-type-system>
 
 #let risety = (
-  // [],
   $
     kappa ::= & "type" | "data" | "nat" \
               & #unimp($|$) #unimp(nat2data) #unimp($|$) #unimp(nat2nat) //#unimp($|$) #unimp("addrSpace")
@@ -537,9 +525,6 @@ exist in #rise:
   purpose-driven use of dependent types: Only very explicit forms of type-level
   functions are allowed.
 
-// #q[very
-//    explicit compared to other dep-langs]#q[bit more here, maybe one example]
-// - #unimp("addrSpace") #q[useful for later stages? leave out?]
 Next we have $zeta$, which defines all valid scalar types such as integers,
 unsigned integers, and floating point numbers. One notable scalar type is
 $"natType"$ which is used to shift a natural number from the type level to the
@@ -550,15 +535,22 @@ operations on nats (#smallcaps[R-NatOp]), and define semantic equivalence of
 nats. #smallcaps[R-NatEquiv] states that in order for $N$ and $M$ to be
 semantically equivalent, every substitution $sigma$ must yield the same constant
 for both $sigma(N)$ and $sigma(M)$. The substitution replaces all variables in
-$N$ and $M$ with constant natural numbers. The universal quantification is
-necessary because $sigma(N)=sigma(M)$ could be "accidentally" true for a single
-substitution, e.g. for $N=0$, $M=x$, and $sigma(x)=0$. Requiring the equality
-for all substitutions gives us what we want: The two natural numbers will _mean_
-the same thing, i.e., evaluate to the same result in all possible contexts.
-Computing all possible contexts is of course not possible, so this will have to
-be implemented differently. In fact, determining semantic equivalence is the
-central challenge of this thesis, and as such will be given careful treatment in
-@unif.
+$N$ and $M$ with constant natural numbers. The intent of the universal
+quantification is that $sigma(N)=sigma(M)$ could be "accidentally" true for a
+single substitution, e.g. for $N=0$, $M=x$, and $sigma(x)=0$. Requiring the
+equality for all substitutions entails that natural numbers will _mean_ the same
+thing, i.e., evaluate to the same result in all possible contexts. Note that we
+reproduce #smallcaps[R-NatEquiv] here as it is defined by the #rise
+authors#footnote[#link(
+  "https://rise-lang.org/doc/language-reference/rise-types#type-equality",
+)], but we think that the definition is flawed. We will nevertheless use the
+definition of semantic equivalence as is for now, and explain why we think it is
+flawed in @complete.
+
+// Computing all possible contexts is of course not possible, so this will have to
+// be implemented differently.
+// In fact, determining semantic equivalence is the central challenge of this
+// thesis, and as such will be given careful treatment in @unif.
 
 Skipping the rules relating to type-level functions, we now arrive at #rise's
 built-in datatypes. Unsurprisingly, all scalar types $zeta$ are of kind

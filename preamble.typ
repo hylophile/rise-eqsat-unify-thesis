@@ -75,9 +75,35 @@ worden.
 // #pagebreak()
 
 #heading(outlined: false)[Abstract]
-#q[todo]
-// #pagebreak()
-
+#rise is a dependently typed functional language with a focus on data-parallel
+computation. It is part of a staged compiler framework that consists of multiple
+intermediate representations and allows specialization of programs towards
+intended hardware. #rise's existing implementation is written in Scala, which
+complicates proving its semantic properties and proving transitions to later
+stages of the compiler framework. In this work, we re-implement (the majority
+of) #rise in the proof assistant Lean to serve -- in the future -- as a single
+source of truth for #rise, its related intermediate representations, and proofs
+thereof. A crucial part of our implementation is type checking and type
+inference of #rise programs. #rise is dependently typed, i.e., types may contain
+terms. For example, arrays contain their length as a natural number in their
+type. Whenever a function is applied to an argument, the argument type must be
+equal to the type of the first parameter of the function. Determining this
+equality is called unification, and presents a challenge due to #rise's
+dependent types. Unification is precisely where we support type checking and
+type inference with _Equality Saturation_ (EqSat), which is a rewrite-based
+process that is commonly used for program optimization and equational reasoning.
+We employ EqSat to perform both _equational unification_, which unifies #rise's
+natural number type components, and _syntactic first-order unification_, which
+unifies the remainder of #rise's types. Since EqSat is a highly malleable
+process, we also evaluate its suitability as a language-agnostic, extensible
+unification engine. This would allow us to use our process for other languages
+with different type systems. We find that EqSat is not well-suited to perform
+algebraic simplification of natural numbers due to poor runtime performance.
+Additionally, we identify various issues with soundness and completeness, which
+ultimately leads us to believe that #rise's type system needs to be extended to
+reason about constraints. Nevertheless, we successfully implement syntactic
+first-order unification with EqSat, and offer an alternative approach to
+equational unification by employing the computer algebra system SymPy.
 
 #outline(
   depth: 3,
