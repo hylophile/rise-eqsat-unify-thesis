@@ -2,37 +2,35 @@
 
 = Discussion <discus>
 
-In this chapter, we will compare the two implementations of unification
-(MM+SymPy and Equality Saturation) that we presented earlier. We will compare
-multiple aspects: runtime performance, explainability, completeness and
+In this chapter, we will compare the two implementations of unification,
+MM+SymPy and Equality Saturation (EqSat), that we presented earlier. We will
+compare multiple aspects: runtime performance, explainability, completeness and
 soundness, and extensibility.
 
 == Runtime performance <runtime>
 
-The runtimes of solving $udata$ with either the MM-Algorithm or Equality
-Saturation, as well as isolating metavariables (@rules-isol) with Equality
-Saturation, are negligible. They all complete within tens of milliseconds. What
-we will compare specifically here is algebraic simplification of natural number
-terms. Before we do this, let us consider why simplification is necessary.
-Returning smaller terms (with regard to AST size) from type inference than
-without simplification is helpful to users, as the returned types might
-otherwise not be easily readable. It also improves code generation for later
-stages of #rise's compiler framework. Another potential usecase for
-simplification is determining semantic equivalence of natural numbers as defined
-by #smallcaps[R-NatEquiv] in @rise-builtin. If we had a simplification process
-that was also _normalizing_#footnote[For example, we would need to normalize
-  addition such that both $a+1+1$ and $3+a-1$ simplify into the normal form
-  $2+a$, in order to assert syntactic equality.], we could use syntactic
-equality to imply semantic equivalence, since two terms that are syntactically
-equal must also mean the same thing. We could use this process to partially
-prove semantic equivalence of our unification goals using equality saturation.
-(Note that this does not fully prove semantic equivalence, since two normalized
-terms that are not syntactically equal could still be semantically equivalent.
-More on this in @complete.) However, we did not implement this due to the
-discouraging runtime performance of equality saturation when performing
-algebraic simplification, which we will discuss now. An alternative approach to
-proving semantic equivalence using an SMT solver will be discussed in
-@completesound.
+The runtimes of solving $udata$ with either the MM-Algorithm or EqSat, as well
+as isolating metavariables (@rules-isol) with EqSat, are negligible. They all
+complete within tens of milliseconds. What we will compare specifically here is
+algebraic simplification of natural number terms. Before we do this, let us
+consider why simplification is necessary. Returning smaller terms (with regard
+to AST size) from type inference than without simplification is helpful to
+users, as the returned types might otherwise not be easily readable. It also
+improves code generation for later stages of #rise's compiler framework. Another
+potential usecase for simplification is determining semantic equivalence of
+natural numbers as defined by #smallcaps[R-NatEquiv] in @rise-builtin. If we had
+a simplification process that was also _normalizing_#footnote[For example, we
+  would need to normalize addition such that both $a+1+1$ and $3+a-1$ simplify
+  into the normal form $2+a$, in order to assert syntactic equality.], we could
+use syntactic equality to imply semantic equivalence, since two terms that are
+syntactically equal must also mean the same thing. We could use this process to
+partially prove semantic equivalence of our unification goals using EqSat. (Note
+that this does not fully prove semantic equivalence, since two normalized terms
+that are not syntactically equal could still be semantically equivalent. More on
+this in @complete.) However, we did not implement this due to the discouraging
+runtime performance of EqSat when performing algebraic simplification, which we
+will discuss now. An alternative approach to proving semantic equivalence using
+an SMT solver will be discussed in @completesound.
 
 @perf shows a comparison of both of our implementations. The input consists of
 30 #r(
@@ -43,10 +41,10 @@ $
   meta(m) unat &#r("(- (- (* 2 (/ (- (+ 1 (+ (+ 1 (+ (/ (nat_bvar h_1) 2) 3)) 0)) 2) 1)) 1)")\ &#r("   (- (+ 2 (* 2 (/ (nat_bvar h_1) 2))) (nat_bvar h_1)))"),
 $
 which we refer to in the table. SymPy returns the fully simplified term (as well
-as all other terms) after 600ms. For Equality Saturation, we show multiple rows
-which differ by iteration count, i.e., for how many iterations our
-simplification rules (@rules-simp) were applied. After 6 iterations and one
-second, Equality Saturation resolves $meta(m)$ to #r(
+as all other terms) after 600ms. For EqSat, we show multiple rows which differ
+by iteration count, i.e., for how many iterations our simplification rules
+(@rules-simp) were applied. After 6 iterations and one second, EqSat resolves
+$meta(m)$ to #r(
   "(+ -1 (+ 4 (nat_bvar h_1)))",
 ), which is _almost_ fully simplified. Then, $meta(m)$ is not simplified further
 until iteration 14. In total, 180 seconds are needed to fully simplify
@@ -99,12 +97,12 @@ there may be a potential to optimize its configuration for our usecase.
   }
 ] <perf>
 
-We find that Equality Saturation is not well-suited for arithmetic
-simplification due to rules such as commutativity and associativity drastically
-growing the e-graph, and resulting in full simplification taking too long to be
-realistically used. As such, it is unsuitable to prove semantic equivalence by
-syntactic equality. If semantic equivalence could be proven through other means
-(e.g. by an SMT solver), we would not necessarily have to fully simplify #r(
+We find that EqSat is not well-suited for arithmetic simplification due to rules
+such as commutativity and associativity drastically growing the e-graph, and
+resulting in full simplification taking too long to be realistically used. As
+such, it is unsuitable to prove semantic equivalence by syntactic equality. If
+semantic equivalence could be proven through other means (e.g. by an SMT
+solver), we would not necessarily have to fully simplify #r(
   "nat",
 )s. Nevertheless, returning only partially simplified #r("nat")s to the user is
 still unsatisfying.
@@ -158,8 +156,7 @@ the unification goal, and otherwise fail (e.g. by returning "unknown").
 We reiterate here that SymPy is not formally verified, but has been in
 development for many years and has benefitted by many contributors improving it.
 As such, we do trust its results, but can never be fully certain of them. Thus,
-we will not discuss its guarantees further and instead focus on equality
-saturation.
+we will not discuss its guarantees further and instead focus on EqSat.
 
 === Completeness <complete>
 As mentioned, #r("nat")-unification cannot be complete. Nevertheless, it is
@@ -218,9 +215,9 @@ type system to reason about constraints.
 //   "-",
 // ).
 
-One notable caveat of our equality saturation implementation pertains to
-division by zero. In @solve-unat, we introduced rewrite rules constrained by a
-condition not_zero(), for example
+One notable caveat of our EqSat implementation pertains to division by zero. In
+@solve-unat, we introduced rewrite rules constrained by a condition not_zero(),
+for example
 #box[$pvar(c) ~ pvar(a) dot pvar(b) -> pvar(c) slash pvar(b) ~ pvar(a) "if not_zero"(pvar(b))$].
 This rule will not be applied if the e-class of $pvar(b)$ contains an e-node
 with the constant value of $0$. However, implementing the condition as such is
@@ -279,8 +276,8 @@ ${bmv(a) unat 5, bmv(a) unat 3}$, where a different, holistic detection
 procedure would be needed. Additionally, it is unclear (at least to us) how to
 _guarantee_ that all types of unsatisfiability are discoverable at least in
 principle. Thus we did not implement any such procedures but instead employed an
-SMT solver to help with this. After having found a substitution with equality
-saturation, we apply this substitution to the originating #r(
+SMT solver to help with this. After having found a substitution with EqSat, we
+apply this substitution to the originating #r(
   "nat",
 )-unification goals and generate an SMT program which asserts that for each
 unification goal, the left- and right-hand side must be equal. This returns
@@ -310,14 +307,14 @@ not clear how that condition should look like.
 
 Summarizing this section on completeness and soundness of our process, there are
 many caveats and open questions with regard to solving $unat$ and guaranteeing
-correct results. Using an SMT solver to verify the results found by equality
-saturation appears to be a viable alternative. As described, the solver will
-only return a single assignment for each nat_bvar when the unification goals are
-satisfiable, which is insufficient information. Instead, we would want it to
-assert satisfiability for _all_ nat_bvars. We could potentially negate our
-assertions such that a result of `unsat` intuitively means that _it is
-impossible to find nat_bvars such that the assertions are false, so therefore
-they must be true for all nat_bvars_, but we did not explore this path yet.
+correct results. Using an SMT solver to verify the results found by EqSat
+appears to be a viable alternative. As described, the solver will only return a
+single assignment for each nat_bvar when the unification goals are satisfiable,
+which is insufficient information. Instead, we would want it to assert
+satisfiability for _all_ nat_bvars. We could potentially negate our assertions
+such that a result of `unsat` intuitively means that _it is impossible to find
+nat_bvars such that the assertions are false, so therefore they must be true for
+all nat_bvars_, but we did not explore this path yet.
 
 == Explainability
 Since we are implementing a typechecking algorithm, we want to give feedback to
@@ -325,27 +322,27 @@ the user when a program fails to typecheck. This feedback needs to refer to the
 specific application (i.e., unification goal) or applications which were not
 satisfiable. To our knowledge, SymPy does not provide any mechanism to explain
 which equalities of an equational system led to there being no solution. We did
-not add soundness checks to our equality saturation implementation, so we cannot
-confidently evaluate this aspect. Nevertheless, since we are fully in control of
-our implementation, it is reasonable to assume that once an unsatisfiability
-between one or more unification goals has been detected, we would be able to
-report back precisely those unification goals. It is worth noting that this
-approach is reminiscent of a feature of SMT solvers called _producing an
-unsatisfiable core_, i.e., producing a minimal subset of the originating
-formula's clauses that are unsatisfiable.
+not add soundness checks to our EqSat implementation, so we cannot confidently
+evaluate this aspect. Nevertheless, since we are fully in control of our
+implementation, it is reasonable to assume that once an unsatisfiability between
+one or more unification goals has been detected, we would be able to report back
+precisely those unification goals. It is worth noting that this approach is
+reminiscent of a feature of SMT solvers called _producing an unsatisfiable
+core_, i.e., producing a minimal subset of the originating formula's clauses
+that are unsatisfiable.
 
 
 == Extensibility
-As we established in @unif, with equality saturation we were able to both
-implement $udata$ (syntactic first-order unification) and $unat$ (equational
-unification), while SymPy was only suitable for $unat$. It should be no surprise
-that we deem equality saturation to be more extensible than SymPy, since the
-very premise of equality saturation is based on providing a custom language,
-rewrite rules, and analysis, while SymPy is designed specifically for symbolic
-mathematics. However, this advantage of equality saturation also has a price:
-Every extension needs to be reasoned about, implemented, vetted, and possibly
-optimized. Meanwhile, SymPy is a well-suited tool for the purpose of solving
-$unat$ and only needed to be integrated into our typechecking algorithm.
+As we established in @unif, with EqSat we were able to both implement $udata$
+(syntactic first-order unification) and $unat$ (equational unification), while
+SymPy was only suitable for $unat$. It should be no surprise that we deem EqSat
+to be more extensible than SymPy, since the very premise of EqSat is based on
+providing a custom language, rewrite rules, and analysis, while SymPy is
+designed specifically for symbolic mathematics. However, this advantage of EqSat
+also has a price: Every extension needs to be reasoned about, implemented,
+vetted, and possibly optimized. Meanwhile, SymPy is a well-suited tool for the
+purpose of solving $unat$ and only needed to be integrated into our typechecking
+algorithm.
 
 We also need to consider in which _direction_ we want to extend. For example,
 our implementation of $udata$ is in principle agnostic over which datatypes it

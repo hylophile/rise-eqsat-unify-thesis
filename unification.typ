@@ -161,7 +161,7 @@ we need to split unification depending on the kind that is to be unified. From
 now on, we will write $udata$ ("#r("data")-unify") to express unifying type
 components of kind #r("data"), and analogously write $unat$ ("#r("nat")-unify")
 to unify #r("nat")s. A more general form or what we dub #r("nat")-unification is
-known as E-Unification (Equational unification) or _unification modulo theory_
+known as E-Unification (equational unification) or _unification modulo theory_
 in the literature: It takes into account semantic properties of function symbols
 (such as commutativity of $+$) @baaderTermRewritingAll1998.
 
@@ -254,8 +254,8 @@ $X+5 unat X+1$) and should that be present, declare the process as failed.
 Now that we have described the unification problem and how it applies to type
 checking and type inference in #rise, we will move on to our approaches of
 solving unification. In @cas, we will solve $udata$ with the MM-Algorithm and
-solve $unat$ with SymPy, and @eqs will present an approach where equality
-saturation will solve both $udata$ and $unat$.
+solve $unat$ with SymPy, and @eqs will present an approach where Equality
+Saturation will solve both $udata$ and $unat$.
 
 == MM-Algorithm + CAS <cas>
 For our first approach, we implemented the MM-Algorithm (@unifrules) in Lean to
@@ -347,22 +347,22 @@ which we parse in Lean.
 
 
 This section showed how we employ SymPy to solve $unat$. Next, we will introduce
-equality saturation and show how it can be used to solve both $udata$ and
+Equality Saturation and show how it can be used to solve both $udata$ and
 $unat$.
 
 == Equality Saturation <eqs>
 
 E-Graphs (equality graphs) are a data structure that stores terms and equalities
-between terms. Equality Saturation is the process of applying rewrite rules to
-the terms in said e-graphs. They are used for program optimization and proving
-equalities in equational reasoning. While e-graphs were devised in the late
-1970s, recent advances in their implementation have inspired much research
+between terms. Equality Saturation (EqSat) is the process of applying rewrite
+rules to the terms in said e-graphs. They are used for program optimization and
+proving equalities in equational reasoning. While e-graphs were devised in the
+late 1970s, recent advances in their implementation have inspired much research
 interest. We will use the open-source library `egg` developed by #cp(
   <willseyEggFastExtensible2021>,
-) to perform equality saturation in our work. One particularly noteworthy
-property of `egg` is its extensibility: We will provide our own language,
-rewrite rules for that language, and custom logic (e-graph analysis). This makes
-`egg` highly flexible, and hence also viable as a tool to solve unification.
+) to perform EqSat in our work. One particularly noteworthy property of `egg` is
+its extensibility: We will provide our own language, rewrite rules for that
+language, and custom logic (e-graph analysis). This makes `egg` highly flexible,
+and hence also viable as a tool to solve unification.
 
 // #pagebreak()
 
@@ -380,16 +380,16 @@ non-destructive; the e-graph never#footnote[Unless we explicitly tell it to.]
 deletes any e-nodes or e-classes, but only adds them. This makes e-graphs useful
 for optimization of terms. They do not get stuck in a local optimum, because all
 optimization steps stay visible in the e-graph. This process of rewriting is
-called _Equality Saturation_. The name stems from the fact that while rewriting,
-the e-graph may saturate: No rewrite would apply further changes, because all
-rewrites have been found. Whether the e-graph saturates depends on the given
-rewrite rules. The last important concept is what `egg` calls _Analysis_: It
-allows us to attach metadata to each e-class, and hook into the merging process
-of e-classes and the process of adding e-nodes. In other words, it allows us to
-specialize equality saturation for our purposes by adding custom logic.
+called _EqSat_. The name stems from the fact that while rewriting, the e-graph
+may saturate: No rewrite would apply further changes, because all rewrites have
+been found. Whether the e-graph saturates depends on the given rewrite rules.
+The last important concept is what `egg` calls _Analysis_: It allows us to
+attach metadata to each e-class, and hook into the merging process of e-classes
+and the process of adding e-nodes. In other words, it allows us to specialize
+EqSat for our purposes by adding custom logic.
 
-Let us now describe a concrete example of equality saturation to see these
-concepts in action. In @egraphexample, we first add the unification goal
+Let us now describe a concrete example of EqSat to see these concepts in action.
+In @egraphexample, we first add the unification goal
 $5 ~ nmv(a) + 1$
 to the e-graph. This creates one e-node for every operator and constant. Each
 e-node is in its own e-class, because at this stage, they are all equal to only
@@ -447,20 +447,19 @@ $5-1$.
   ),
 ) <egraphexample>
 
-The advantage of equality saturation is that we supply our own language, rewrite
-rules, and analysis to the process. This enables us to solve both $udata$
-(syntactic first-order unification) and $unat$ (e-unification) with it. We will
-now show in detail how we achieved this. @discus will then discuss advantages
-and limitations of the two approaches we explored (SymPy and equality
-saturation).
+The advantage of EqSat is that we supply our own language, rewrite rules, and
+analysis to the process. This enables us to solve both $udata$ (syntactic
+first-order unification) and $unat$ (e-unification) with it. We will now show in
+detail how we achieved this. @discus will then discuss advantages and
+limitations of the two approaches we explored (SymPy and EqSat).
 
 === Solving $udata$
 As shown before, we solve first-order unification by applying the MM-Algorithm
 to the input, with the exception of #smallcaps[U-Decompose]. Hence, we will
 describe in this section the language, rewrite rules, and analysis that we
-employ to translate this algorithm into the framework of equality saturation,
-and show how each unification rule (@unifrules and @decomp-fine) corresponds to
-which aspect of our implementation.
+employ to translate this algorithm into the framework of EqSat, and show how
+each unification rule (@unifrules and @decomp-fine) corresponds to which aspect
+of our implementation.
 
 _The language_. We will use the same language for both $udata$ and $unat$
 (@egglang). This consists of all of #rise's currently implemented #r(
@@ -477,8 +476,7 @@ different rewrite rules on them. The enum is wrapped in the Rust macro
 for us.
 
 #figure(
-  caption: [The language we use to solve unification using equality
-    saturation.],
+  caption: [The language we use to solve unification using EqSat.],
   ```rust
   define_language! {
       pub enum RiseType {
@@ -577,24 +575,23 @@ only data_mvars on both sides.
 
 Finally, we need to ensure that both #smallcaps[U-Conflict] and
 #smallcaps[U-Check] are enforced. When using e-graphs in practice, it is always
-necessary to limit how long to run equality saturation for. Otherwise, it might
-not terminate. Fortunately for us, the rules presented in this section are
-saturating the e-graph, so we can run them until they would no longer change the
-e-graph. After this has been completed, we inspect the resulting e-graph. First,
-we inspect every unification node ($~$) that was created during equality
-saturation. If for every unification node, both of its edges point to the same
-e-class, we know that the unification goal was reached, because both sides have
-been made equal by equality saturation. If this is not the case, we declare the
-unification as failed as in #smallcaps[U-Conflict]. Additionally, we need to
-enforce that there are no cycles pertaining to data_mvars in the e-graph, as in
-#smallcaps[U-Check]. This is achieved during extraction: If we need to visit the
-e-class of (data_mvar $pvar(a)$) more than once while extracting the
-substitution for (data_mvar $pvar(a)$), we know that a cycle exists. Since this
-would lead to an infinite term, we abort in this case and declare unification as
-failed.
+necessary to limit how long to run EqSat for. Otherwise, it might not terminate.
+Fortunately for us, the rules presented in this section are saturating the
+e-graph, so we can run them until they would no longer change the e-graph. After
+this has been completed, we inspect the resulting e-graph. First, we inspect
+every unification node ($~$) that was created during EqSat. If for every
+unification node, both of its edges point to the same e-class, we know that the
+unification goal was reached, because both sides have been made equal by EqSat.
+If this is not the case, we declare the unification as failed as in
+#smallcaps[U-Conflict]. Additionally, we need to enforce that there are no
+cycles pertaining to data_mvars in the e-graph, as in #smallcaps[U-Check]. This
+is achieved during extraction: If we need to visit the e-class of (data_mvar
+$pvar(a)$) more than once while extracting the substitution for (data_mvar
+$pvar(a)$), we know that a cycle exists. Since this would lead to an infinite
+term, we abort in this case and declare unification as failed.
 
-Now that we showed how we solve $udata$ with equality saturation, we move on to
-solving $unat$.
+Now that we showed how we solve $udata$ with EqSat, we move on to solving
+$unat$.
 
 === Solving $unat$ <solve-unat>
 When the previously described #r("data")-unifying process is done and
@@ -672,19 +669,20 @@ We have now established how this first ruleset isolates metavariables. The next
 step will be to simplify the solutions that were found, since the resulting
 terms may be quite complex. However, during the process of isolation, many
 intermediate unification goals are added to the e-graph where metavariables are
-not isolated yet. The usually advantageous non-destructive nature of equality
-saturation is a disadvantage here: If we were to apply simplification rules to
-this e-graph, we would also simplify _all_ intermediate unification goals, even
-though we are not interested in them. Not only is that unnecessary work, it is
-also highly detrimental to performance: Simplification would take much longer.
-Thus, before attempting to simplify the resulting terms, we extract the unique
-solution for each metavariable from the current e-graph, and add all solutions
--- along with which metavariable they belong to -- to a new, much smaller
-e-graph. This does however also mean that we cannot use the criterion of "For
-every unification goal, do both edges point to the same e-class?" that we used
-for #r("data")-unification to determine whether conflicts occurred. While it may
-lead to discovering unsatisfiability of given unification goals in the e-graph,
-it is not viable performance-wise.
+not isolated yet. The usually advantageous non-destructive nature of EqSat is a
+disadvantage here: If we were to apply simplification rules to this e-graph, we
+would also simplify _all_ intermediate unification goals, even though we are not
+interested in them. Not only is that unnecessary work, it is also highly
+detrimental to performance: Simplification would take much longer. Thus, before
+attempting to simplify the resulting terms, we extract the unique solution for
+each metavariable from the current e-graph, and add all solutions -- along with
+which metavariable they belong to -- to a new, much smaller e-graph. This does
+however also mean that we cannot use the criterion of "For every unification
+goal, do both edges point to the same e-class?" that we used for #r(
+  "data",
+)-unification to determine whether conflicts occurred. While it may lead to
+discovering unsatisfiability of given unification goals in the e-graph, it is
+not viable performance-wise.
 
 #figure(
   // grid(
@@ -724,8 +722,8 @@ constant information and a new e-node to its e-class. For example, if a
 $+$-e-node points to e-classes with constant information of $2$ and $5$
 respectively, we add a $7$-e-node to the e-class of the $+$-e-node, and update
 the metadata of that e-class to be $7$ as well. For this ruleset, it is
-necessary to declare a limit for when to stop equality saturation. This is due
-to rules such as associativity and commutativity growing the e-graph
+necessary to declare a limit for when to stop EqSat. This is due to rules such
+as associativity and commutativity growing the e-graph
 drastically#footnote[Consider the term $a+b+c+d$. There are 4!=24 different ways
   to order the subterms due to commutativity of addition. Furthermore, there are
   $C_(4-1)=5$ ways to associate the subterms, where $C_n$ is the $n$th Catalan
@@ -743,8 +741,8 @@ and apply this substitution to the type of the originating #rise program. Notice
 that a crucial step of #r("nat")-unification is still missing, namely that we
 have to verify whether after applying the substitution to each unification goal,
 semantic equivalence holds for each unification goal. There are multiple reasons
-for why this verification is difficult to do with equality saturation, all of
-which we will discuss in the next chapter.
+for why this verification is difficult to do with EqSat, all of which we will
+discuss in the next chapter.
 
 // have to verify the found substitution:
 // 1. After applying the substitution to the unification goals, semantic
@@ -756,11 +754,10 @@ which we will discuss in the next chapter.
 
 This concludes the presentation of unification and our approaches to solve it
 for the dependent types of #rise, using the MM-Algorithm and SymPy as one
-approach, and Equality Saturation as the other. As hinted above, there are
-soundness issues with our usage of Equality Saturation. We will discuss these
-issues in the next chapter, give possible solutions to them, and discuss other
-aspects of our approaches as well, such as runtime performance and
-extensibility.
+approach, and EqSat as the other. As hinted above, there are soundness issues
+with our usage of EqSat. We will discuss these issues in the next chapter, give
+possible solutions to them, and discuss other aspects of our approaches as well,
+such as runtime performance and extensibility.
 // We do however create new unification goals when applying properties of equalities ...
 
 // cannot use the same process as before...

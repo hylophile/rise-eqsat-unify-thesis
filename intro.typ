@@ -46,17 +46,16 @@ made true by a substitution, as we will see later) is called unification, the
 central part of type checking and type inference of #rise programs that we will
 explore. Concretely, we will present two different approaches to solve
 unification: First, using SymPy, which is a Computer Algebra System that allows
-us to solve the subproblem of unifying natural numbers. Then, equality
-saturation, which is a process based on non-destructive rewrites that is
-commonly used for program optimization and equational reasoning. Notably,
-equality saturation is highly extensible, which allows us to implement every
-kind of unification that #rise needs.
+us to solve the subproblem of unifying natural numbers. Then, Equality
+Saturation (EqSat), which is a process based on non-destructive rewrites that is
+commonly used for program optimization and equational reasoning. Notably, EqSat
+is highly extensible, which allows us to implement every kind of unification
+that #rise needs.
 
 The motivation for this work is twofold: \
-First, while we could have explored the topic of unification using equality
-saturation just as well in a minimally viable language, we specifically
-implemented #rise in the interactive proof assistant Lean. The current
-implementation#footnote(
+First, while we could have explored the topic of unification using EqSat just as
+well in a minimally viable language, we specifically implemented #rise in the
+interactive proof assistant Lean. The current implementation#footnote(
   link("https://rise-lang.org/"),
 ) uses Scala, which does not support proofs. Having the compiler implemented in
 a language that supports proofs will serve as a single source of truth and
@@ -70,20 +69,19 @@ otherwise known as language frameworks. This can be understood as a system that
 receives a declarative specification of a language in the form of its syntax,
 type system, and execution semantics, and outputs among other things an
 implementation of the language, while crucially being able to detect errors in
-the specification. We believe that equality saturation has the potential to be
-part of the implementation of such a system, particularly because all of the
-mentioned systems, just as equality saturation, are based on rewrites. This
-belief is the reason we employed equality saturation for unification, even
-though unification is merely a small part of a language framework. Thus, we will
-also evaluate equality saturation with regard to this aspect, i.e., its
-feasibility as a modular, extensible unification engine.
+the specification. We believe that EqSat has the potential to be part of the
+implementation of such a system, particularly because all of the mentioned
+systems, just as EqSat, are based on rewrites. This belief is the reason we
+employed EqSat for unification, even though unification is merely a small part
+of a language framework. Thus, we will also evaluate EqSat with regard to this
+aspect, i.e., its feasibility as a modular, extensible unification engine.
 
 In @rise, we will present #rise's features, type system, and relevant parts of
 our implementation. @unif will show how we implemented unification with SymPy
-and Equality Saturation, respectively. @discus discusses our results and
-compares both approaches with regard to attributes that are relevant for a type
-checker. Finally, @future will look at extensions that we think #rise could
-benefit from, and consider alternative unification implementations.
+and EqSat, respectively. @discus discusses our results and compares both
+approaches with regard to attributes that are relevant for a type checker.
+Finally, @future will look at extensions that we think #rise could benefit from,
+and consider alternative unification implementations.
 
 
 
