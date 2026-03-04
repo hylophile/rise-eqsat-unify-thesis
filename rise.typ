@@ -91,6 +91,9 @@ remainder of this thesis. A full grammar can be found in #ref(
   supplement: [Appendix],
   <rise-primitives>,
 ), which may help to get a better understanding of what is possible with #rise.
+The source code for our implementation is attached to this thesis and can also
+be found at #link("https://github.com/hylophile/rise-lean"). `README.md`
+includes instructions for execution.
 
 #figure(
   ```rise

@@ -22,11 +22,13 @@ substitution might not exist.
 In our context, the related terms that are to be unified are #rise types. The
 variables subject to unification are metavariables, i.e., unknown types (or type
 components) that need to be inferred. Note that #rise types may also include
-binding and bound variables, which are also unknown types, but _must not_ be
-inferred because they represent parameters of the program that are yet to be
-provided by the user. To illustrate this difference, we will always prefix
-metavariables with a question mark, e.g. $meta(x)$, and write binding and bound
-variables without prefix.
+binding and bound variables, which also represent unknown types, but _must not_
+be inferred because they represent parameters of the program that are yet to be
+provided by the user. In other words, metavariables are existentially
+quantified, so we must find a solution for them, and bound variables are
+universally quantified, so we must _not_ find a solution for them. To illustrate
+this difference, we will always prefix metavariables with a question mark, e.g.
+$meta(x)$, and write binding and bound variables without prefix.
 
 If unification fails, i.e., there is no substitution $sigma$ such that
 $forall l ~ r in G$ . $sigma(l) = sigma(r)$, then that will indicate a type
@@ -267,7 +269,7 @@ encounter a #r("nat")-unification goal (namely, when #smallcaps[UD-Decompose]
 visits a datatype that contains a #r("nat")), we collect that goal into a list
 $G^NN$. If the MM-Algorithm finishes with a suitable substitution (for variables
 of kind #r("data")), we are then left with a list of $unat$-goals. These goals
-are given to a Computer Algebra System, specifically SymPy.
+are given to a computer algebra system, specifically SymPy.
 
 SymPy is an open source Python library for symbolic computation. It was
 originally started by Ondřej Čertík in 2005, and has since grown to over 1300

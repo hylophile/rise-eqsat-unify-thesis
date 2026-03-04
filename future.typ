@@ -23,7 +23,7 @@ We identified the need to express constraints in #rise programs. Consider the
 program #r("fun a b : nat => fun xs : b·f32 => take (a : nat) xs"). The program
 attempts to take `a` elements from an array that is `b` elements long. In
 #rise's current type system, this program typechecks, implying that it is valid
-for all `a` and `b`. However, this ignores that $#mono("a")>=#mono("b")$ must
+for all `a` and `b`. However, this ignores that $#mono("a")<=#mono("b")$ must
 hold for this program to not crash at runtime. There are other constraints we
 would need to express, such as the fact that when reshaping an array of type #r(
   "a·f32",
@@ -35,7 +35,7 @@ explicit constraints to #rise's type system, and find methods that take these
 into account, since both SymPy and EqSat seem unsuitable for this. Ideally,
 constraints could be synthesized by such a method and reported back to the user
 (as in "This program does not typecheck unless the constraint
-$#mono("a")>=#mono("b")$ is added"), who would then add the constraint to the
+$#mono("a")<=#mono("b")$ is added"), who would then add the constraint to the
 #rise program. This would achieve stronger guarantees over which #rise programs
 are safe (i.e., do not crash with invalid inputs) for which inputs, which
 ultimately is one of the goals of a type system.
@@ -60,7 +60,7 @@ solution.
 
 Assuming that #rise's type system stays as it is, i.e., does not add
 constraints, we think that the approach of MM-Algorithm + SymPy (or any other
-Computer Algebra System) is the most practical solution, since it covers finding
+computer algebra system) is the most practical solution, since it covers finding
 unsatisfiability (although not proven), performs arithmetic simplification, is
 performant enough, and does not need to be extensible. This is under the
 condition that we would need to implement the production of an unsatisfiable

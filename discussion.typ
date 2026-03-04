@@ -99,10 +99,10 @@ there may be a potential to optimize its configuration for our usecase.
 
 We find that EqSat is not well-suited for arithmetic simplification due to rules
 such as commutativity and associativity drastically growing the e-graph, and
-resulting in full simplification taking too long to be realistically used. As
-such, it is unsuitable to prove semantic equivalence by syntactic equality. If
-semantic equivalence could be proven through other means (e.g. by an SMT
-solver), we would not necessarily have to fully simplify #r(
+resulting in full simplification taking too long to be realistically used in
+type checking. As such, it is unsuitable to prove semantic equivalence by
+syntactic equality. If semantic equivalence could be proven through other means
+(e.g. by an SMT solver), we would not necessarily have to fully simplify #r(
   "nat",
 )s. Nevertheless, returning only partially simplified #r("nat")s to the user is
 still unsatisfying.
@@ -163,18 +163,18 @@ As mentioned, #r("nat")-unification cannot be complete. Nevertheless, it is
 worthwhile to consider additional caveats to completeness that we encountered,
 but are not necessarily universal.
 
-First and foremost, we want to address the definition of semantic equivalence,
-which -- we think unintentionally -- prohibits a class of #rise programs and
-hence restricts completeness of the #rise type system. In @rise-tyrules, we
-defined semantic equivalence of natural number terms as
+First, we want to address the definition of semantic equivalence, which
+prohibits a class of #rise programs and hence restricts completeness of the
+#rise type system with regard to #rise programs that are in principle not
+inherently unsafe. In @rise-tyrules, we defined semantic equivalence of natural
+number terms as
 #align(center, ir(
   label: [R-NatEquiv],
   $forall sigma : op("dom")(Delta) -> NN thick . thick sigma(N) = sigma(M)$,
   $N equiv M$,
 ))
 
-and indicated that we think the definition is flawed. To see why, consider the
-following #rise program:
+and indicated the restriction. To see why, consider the following #rise program:
 ```rise
 def mul : {t : data} → t → t → t
 
@@ -192,19 +192,25 @@ in combination with #smallcaps[R-NatEquiv]), which implies that #r("4") and #r(
 will be in the kinding context $Delta$ for this derivation, so it is subject to
 $sigma$ in #smallcaps[R-NatEquiv]. And clearly, it is not true that all
 substitutions of #r("a") yield equality to #r("4")\; only the substitution
-$[#r("a") |-> #r("4")]$ does. If we implemented this rule faithfully, the above
-program would not typecheck. We do not think that this was intended by the #rise
-authors, but rather that the intention of #smallcaps[R-NatEquiv] is to determine
-that a term like $#r("a+5-2")$ is semantically equivalent to #r(
-  "3+a",
-), because it evaluates to the same natural number for all substitutions of #r(
-  "a",
-). But as shown here, the rule is flawed whenever a variable occurs on only one
-side of a semantic equivalence, and not both. In that case, the equivalence
-should be viewed as a constraint that the program imposes on the variable (such
-as here, where #r("a") can only be #r("4")). This requires to remodel #rise's
-type system to reason about constraints.
+$[#r("a") |-> #r("4")]$ does. With the current #rise system, this program does
+not typecheck. Nevertheless, the program is not inherently unsafe. Instead, the
+equivalence could be viewed as a constraint that the program imposes on the
+variable (such as here, where #r("a") can only be #r("4")). This requires to
+remodel #rise's type system to reason about constraints.
 
+// If we implemented this rule faithfully, the above
+// program would not typecheck.
+
+//  We do not think that this was intended by the #rise
+// authors, but rather that the intention of #smallcaps[R-NatEquiv] is to determine
+// that a term like $#r("a+5-2")$ is semantically equivalent to #r(
+//   "3+a",
+// ), because it evaluates to the same natural number for all substitutions of #r(
+//   "a",
+// ).
+
+//  But as shown here, the rule is flawed whenever a variable occurs on only one
+// side of a semantic equivalence, and not both.
 // To typecheck this program, one of the unification goals that will be generated
 // is the #r("nat")-unification goal $bmv(a) unat 4$.
 

@@ -45,7 +45,7 @@ equalities in a given equational system are true (or rather, whether they can be
 made true by a substitution, as we will see later) is called unification, the
 central part of type checking and type inference of #rise programs that we will
 explore. Concretely, we will present two different approaches to solve
-unification: First, using SymPy, which is a Computer Algebra System that allows
+unification: First, using SymPy, which is a computer algebra system that allows
 us to solve the subproblem of unifying natural numbers. Then, Equality
 Saturation (EqSat), which is a process based on non-destructive rewrites that is
 commonly used for program optimization and equational reasoning. Notably, EqSat

@@ -539,13 +539,17 @@ $N$ and $M$ with constant natural numbers. The intent of the universal
 quantification is that $sigma(N)=sigma(M)$ could be "accidentally" true for a
 single substitution, e.g. for $N=0$, $M=x$, and $sigma(x)=0$. Requiring the
 equality for all substitutions entails that natural numbers will _mean_ the same
-thing, i.e., evaluate to the same result in all possible contexts. Note that we
-reproduce #smallcaps[R-NatEquiv] here as it is defined by the #rise
-authors#footnote[#link(
-  "https://rise-lang.org/doc/language-reference/rise-types#type-equality",
-)], but we think that the definition is flawed. We will nevertheless use the
-definition of semantic equivalence as is for now, and explain why we think it is
-flawed in @complete.
+thing, i.e., evaluate to the same result in all possible contexts. Note that
+this rule explicitly forbids certain #rise programs in the interest of
+simplicity of the type system. We will address this in detail in @complete.
+
+//  Note that we
+// reproduce #smallcaps[R-NatEquiv] here as it is defined by the #rise
+// authors#footnote[#link(
+//   "https://rise-lang.org/doc/language-reference/rise-types#type-equality",
+// )], but we think that the definition is flawed. We will nevertheless use the
+// definition of semantic equivalence as is for now, and explain why we think it is
+// flawed in @complete.
 
 // Computing all possible contexts is of course not possible, so this will have to
 // be implemented differently.

@@ -71,7 +71,47 @@ worden.
 #pagebreak()
 
 #heading(outlined: false)[Kurzfassung]
-#q[todo]
+#{
+  set text(lang: "de")
+  [
+    #rise ist eine abhängig typisierte funktionale Sprache fokussiert auf
+    datenparallele Berechnungen. Sie ist Teil eines mehrstufigen
+    Compiler-Frameworks, das aus mehreren Zwischenrepräsentationen besteht und
+    die Spezialisierung von Programmen für die vorgesehene Hardware ermöglicht.
+    Die bestehende Implementierung von #rise ist in Scala geschrieben, was den
+    Beweis ihrer semantischen Eigenschaften und den Beweis von Übergängen zu
+    späteren Stufen des Compiler-Frameworks erschwert. In dieser Arbeit
+    implementieren wir (den Großteil von) #rise im Beweisassistenten Lean neu,
+    um zukünftig als zentrale Quelle für #rise, seine zugehörigen
+    Zwischenrepräsentationen und deren Beweise zu dienen. Ein wesentlicher
+    Bestandteil unserer Implementierung ist die Typüberprüfung und Typinferenz
+    von #rise\-Programmen. #rise ist abhängig typisiert, d. h., Typen können
+    Terme enthalten. Beispielsweise enthalten Arrays ihre Länge als natürliche
+    Zahl in ihrem Typ. Wird eine Funktion auf ein Argument angewendet, muss der
+    Argumenttyp gleich dem Typ des ersten Parameters der Funktion sein. Die
+    Bestimmung dieser Gleichheit wird als Unifikation bezeichnet und stellt
+    aufgrund der abhängigen Typen von #rise eine Herausforderung dar.
+    Unifikation ist genau der Teil der Typüberprüfung und Typinferenz, den wir
+    mittels _Equality Saturation_ (EqSat) unterstützen werden. Dies ist ein auf
+    Termersetzung basierter Prozess, der häufig zur Programmoptimierung und für
+    Gleichheitsbeweise eingesetzt wird. Wir verwenden EqSat sowohl für die
+    _gleichungsbasierte Unifikation_, die die natürlichen Zahlentypen von #rise
+    unifiziert, als auch für die _syntaktische Unifikation erster Stufe_, die
+    die übrigen Typen von #rise unifiziert. Da EqSat ein sehr flexibler Prozess
+    ist, untersuchen wir auch seine Eignung als sprachunabhängige, erweiterbare
+    Unifikationsmethode. Dies würde es uns ermöglichen, unseren Prozess für
+    andere Sprachen mit unterschiedlichen Typsystemen zu verwenden. Wir stellen
+    fest, dass EqSat aufgrund mangelhafter Laufzeit nicht gut für die
+    algebraische Vereinfachung natürlicher Zahlen geeignet ist. Darüber hinaus
+    identifizieren wir verschiedene Probleme hinsichtlich Korrektheit und
+    Vollständigkeit, was uns letztendlich zu der Annahme führt, dass das System
+    von #rise erweitert werden muss, um über Constraints ("Einschränkungen") zu
+    argumentieren. Dennoch implementieren wir erfolgreich die syntaktische
+    Unifikation erster Stufe mit EqSat und bieten einen alternativen Ansatz zur
+    gleichungsbasierten Unifikation unter Verwendung des Computeralgebrasystems
+    SymPy.
+  ]
+}
 // #pagebreak()
 
 #heading(outlined: false)[Abstract]
